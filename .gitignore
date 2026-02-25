@@ -1,0 +1,43 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+
+# ── Artifacts – keep latest/, ignore per-run dumps ───────────────────────────
+artifacts/runs/*
+!artifacts/runs/.gitkeep
+
+# artifacts/latest/ is intentionally tracked for demo purposes
+# (do NOT add artifacts/latest/ here)
+
+# ── Jupyter / IPython ─────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── OS / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Model checkpoints (large files) ───────────────────────────────────────────
+*.pt
+*.pth
+*.onnx
+*.h5
+
+# ── Audio scratch ─────────────────────────────────────────────────────────────
+*.wav
+*.mp3

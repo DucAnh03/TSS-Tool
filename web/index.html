@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MLOps Demo – Latest Run</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
+    h1   { border-bottom: 2px solid #333; padding-bottom: .4rem; }
+    .card { background: #f5f5f5; border-radius: 6px; padding: 1rem 1.5rem; margin: 1rem 0; }
+    .card h2 { margin-top: 0; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: .3rem .7rem; border: 1px solid #ccc; text-align: left; }
+    th { background: #ddd; }
+    img  { max-width: 100%; border: 1px solid #ccc; border-radius: 4px; margin-top: .5rem; }
+    .meta { color: #666; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <h1>MLOps Demo – Latest Run</h1>
+  <p class="meta" id="meta">Loading metrics…</p>
+
+  <div class="card" id="voice-card">
+    <h2>Voice Pipeline (openWakeWord)</h2>
+    <table id="voice-table"></table>
+    <img id="voice-img" src="" alt="ROC curve" style="display:none" />
+  </div>
+
+  <div class="card" id="vision-card">
+    <h2>Vision Pipeline (CIFAR-10 SimpleCNN)</h2>
+    <table id="vision-table"></table>
+    <img id="vision-img" src="" alt="Confusion matrix" style="display:none" />
+  </div>
+
+  <script>
+    async function loadMetrics() {
+      const r = await fetch("../artifacts/latest/metrics.json");
+      const d = await r.json();
+
+      document.getElementById("meta").textContent =
+        `run_id: ${d.run_id} | git_sha: ${d.git_sha} | ${d.created_at_utc}`;
+
+      function renderTable(tableId, obj) {
+        const tbl = document.getElementById(tableId);
+        tbl.innerHTML = Object.entries(obj)
+          .filter(([k]) => !k.endsWith("_png"))
+          .map(([k, v]) => `<tr><th>${k}</th><td>${v ?? "—"}</td></tr>`)
+          .join("");
+      }
+
+      renderTable("voice-table",  d.voice);
+      renderTable("vision-table", d.vision);
+
+      if (d.voice.curve_png) {
+        const img = document.getElementById("voice-img");
+        img.src = `../${d.voice.curve_png}`; img.style.display = "";
+      }
+      if (d.vision.confusion_png) {
+        const img = document.getElementById("vision-img");
+        img.src = `../${d.vision.confusion_png}`; img.style.display = "";
+      }
+    }
+    loadMetrics().catch(e => {
+      document.getElementById("meta").textContent = "Could not load metrics.json: " + e;
+    });
+  </script>
+</body>
+</html>

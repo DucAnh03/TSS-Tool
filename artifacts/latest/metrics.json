@@ -1,0 +1,22 @@
+{
+  "run_id": "00000000_000000_0000000",
+  "git_sha": "0000000",
+  "created_at_utc": "1970-01-01T00:00:00Z",
+
+  "voice": {
+    "wakeword": "hey_jarvis",
+    "mode": "quick",
+    "far": null,
+    "frr": null,
+    "threshold": 0.5,
+    "curve_png": "artifacts/latest/voice_roc.png"
+  },
+
+  "vision": {
+    "dataset": "CIFAR-10",
+    "model": "SimpleCNN",
+    "accuracy": null,
+    "loss": null,
+    "confusion_png": "artifacts/latest/vision_confusion.png"
+  }
+}
