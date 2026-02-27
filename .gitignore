@@ -41,3 +41,9 @@ Thumbs.db
 # ── Audio scratch ─────────────────────────────────────────────────────────────
 *.wav
 *.mp3
+
+# ── Bảo mật – KHÔNG BAO GIỜ commit file này ──────────────────────────────────
+.env
+.env.local
+.env.*.local
+# .env.example được phép commit (không có giá trị thật)
