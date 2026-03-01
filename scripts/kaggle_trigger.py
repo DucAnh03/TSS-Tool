@@ -26,10 +26,10 @@ if PUSH_DIR.exists():
     shutil.rmtree(PUSH_DIR)
 PUSH_DIR.mkdir()
 
-# Copy files cần thiết
-for src in ["phobert/train.py", "config/params.yaml"]:
-    dst = PUSH_DIR / Path(src).name
-    shutil.copy(src, dst)
+# Copy files cần thiết — giữ nguyên cấu trúc thư mục
+shutil.copy("phobert/train.py", PUSH_DIR / "train.py")
+(PUSH_DIR / "config").mkdir(exist_ok=True)
+shutil.copy("config/params.yaml", PUSH_DIR / "config/params.yaml")
 
 # Tạo kernel-metadata.json
 meta = {
