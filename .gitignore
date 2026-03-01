@@ -42,6 +42,11 @@ Thumbs.db
 *.wav
 *.mp3
 
+# ── Node / React ──────────────────────────────────────────────────────────────
+node_modules/
+web/dist/
+web/.vite/
+
 # ── Bảo mật – KHÔNG BAO GIỜ commit file này ──────────────────────────────────
 .env
 .env.local

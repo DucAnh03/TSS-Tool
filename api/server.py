@@ -37,11 +37,11 @@ SAMPLE_RATE = int(os.getenv("AUDIO_SAMPLE_RATE", "16000"))
 HOST        = os.getenv("VPS_HOST", "0.0.0.0")
 PORT        = int(os.getenv("VPS_PORT", "8000"))
 
-# VAD tuning — adjust RMS_THRESHOLD if mic is too quiet / too sensitive
-CHUNK_SAMPLES  = 480    # 30 ms @16 kHz — must match client STT_CHUNK
-RMS_THRESHOLD  = 400    # RMS energy above this → voice detected
-SILENCE_SEC    = 0.8    # seconds of silence after speech → trigger transcription
-MIN_SPEECH_SEC = 0.2    # ignore noise bursts shorter than this
+# VAD tuning — đọc từ .env để dễ chỉnh không cần sửa code
+CHUNK_SAMPLES  = 480
+RMS_THRESHOLD  = int(os.getenv("VAD_RMS_THRESHOLD",  "300"))   # thấp hơn = nhạy hơn
+SILENCE_SEC    = float(os.getenv("VAD_SILENCE_SEC",  "1.5"))   # chờ lâu hơn trước khi cắt
+MIN_SPEECH_SEC = float(os.getenv("VAD_MIN_SPEECH_SEC","0.3"))
 
 # ── App ───────────────────────────────────────────────────────────────────────
 app      = FastAPI(title="Jarvis STT API")
@@ -74,8 +74,25 @@ def _transcribe(wav_bytes: bytes) -> dict:
         f.write(wav_bytes)
         path = f.name
     try:
-        segs, info = _model.transcribe(path, beam_size=5, language=LANG)
-        text = " ".join(s.text for s in segs).strip()
+        segs, info = _model.transcribe(
+            path,
+            language=LANG,
+            beam_size=5,
+            vad_filter=True,               # Silero VAD — lọc đoạn không có tiếng nói
+            vad_parameters={
+                "min_silence_duration_ms": 500,
+                "speech_pad_ms": 200,
+            },
+            no_speech_threshold=0.6,       # bỏ segment nếu xác suất "không có giọng" > 0.6
+            condition_on_previous_text=False,  # tắt context loop — ngăn hallucination lặp
+            temperature=0.0,               # greedy decode, ít bịa hơn
+        )
+        segments = list(segs)
+        # Lọc thêm: bỏ segment có no_speech_prob cao
+        text = " ".join(
+            s.text for s in segments
+            if s.no_speech_prob < 0.6
+        ).strip()
         return {"text": text, "language": info.language}
     finally:
         os.remove(path)
