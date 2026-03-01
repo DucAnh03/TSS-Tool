@@ -2,12 +2,12 @@ name: PhoBERT Training Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "master"]
     paths:
-      - "config/params.yaml"      # chỉ trigger khi đổi hyperparams
-      - "phobert/train.py"        # hoặc đổi code training
+      - "config/params.yaml"
+      - "phobert/train.py"
   pull_request:
-    branches: ["main"]
+    branches: ["main", "master"]
     paths:
       - "config/params.yaml"
       - "phobert/train.py"
