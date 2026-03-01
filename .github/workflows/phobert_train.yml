@@ -33,22 +33,17 @@ jobs:
       - name: Cài Kaggle API + dependencies
         run: pip install kaggle pyyaml requests
 
-      - name: Cấu hình Kaggle credentials
-        env:
-          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-          KAGGLE_KEY:      ${{ secrets.KAGGLE_KEY }}
-        run: |
-          mkdir -p ~/.kaggle
-          echo '{"username":"${{ secrets.KAGGLE_USERNAME }}","key":"${{ secrets.KAGGLE_KEY }}"}' > ~/.kaggle/kaggle.json
-          chmod 600 ~/.kaggle/kaggle.json
-
       - name: Trigger Kaggle kernel → train PhoBERT
         env:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY:      ${{ secrets.KAGGLE_KEY }}
           HF_TOKEN:        ${{ secrets.HF_TOKEN }}
           HF_MODEL_REPO:   ${{ secrets.HF_MODEL_REPO }}
-        run: python scripts/kaggle_trigger.py
+        run: |
+          mkdir -p ~/.kaggle
+          printf '{"username":"%s","key":"%s"}' "$KAGGLE_USERNAME" "$KAGGLE_KEY" > ~/.kaggle/kaggle.json
+          chmod 600 ~/.kaggle/kaggle.json
+          python scripts/kaggle_trigger.py
 
       - name: Setup CML
         uses: iterative/setup-cml@v2
