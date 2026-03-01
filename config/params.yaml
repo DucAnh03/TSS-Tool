@@ -1,0 +1,28 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Thay đổi file này → git push → GitHub Actions tự động trigger Kaggle training
+# ──────────────────────────────────────────────────────────────────────────────
+
+model:
+  name: vinai/phobert-base # hoặc vinai/phobert-large
+  num_labels: 3 # negative / neutral / positive
+  max_length: 128
+
+training:
+  epochs: 5
+  batch_size: 32
+  learning_rate: 2e-5
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  early_stopping_patience: 2
+
+dataset:
+  name: uitnlp/vietnamese_students_feedback
+  text_column: sentence
+  label_column: sentiment
+  train_size: 10000
+  test_size: 2000
+
+labels:
+  0: "tiêu cực"
+  1: "trung tính"
+  2: "tích cực"

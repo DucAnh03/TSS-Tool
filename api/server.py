@@ -12,6 +12,7 @@ Audio format expected from client:
 import asyncio
 import io
 import os
+import sys
 import tempfile
 import wave
 from concurrent.futures import ThreadPoolExecutor
@@ -19,6 +20,10 @@ from typing import List
 
 import numpy as np
 from dotenv import load_dotenv
+
+# PhoBERT inference (optional — chỉ chạy nếu HF_MODEL_REPO được đặt)
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+from phobert.inference import predict as phobert_predict
 from fastapi import (
     FastAPI, File, Header, HTTPException,
     Query, UploadFile, WebSocket, WebSocketDisconnect,
@@ -93,7 +98,14 @@ def _transcribe(wav_bytes: bytes) -> dict:
             s.text for s in segments
             if s.no_speech_prob < 0.6
         ).strip()
-        return {"text": text, "language": info.language}
+
+        # PhoBERT inference (nếu model đã được load)
+        phobert = phobert_predict(text) if text else None
+
+        result = {"text": text, "language": info.language}
+        if phobert:
+            result["intent"] = phobert   # {label, label_id, confidence}
+        return result
     finally:
         os.remove(path)
 

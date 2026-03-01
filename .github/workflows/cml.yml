@@ -12,8 +12,7 @@ permissions:
 
 jobs:
   train-and-report:
-    # Chạy trên Google Colab self-hosted runner (label: colab)
-    runs-on: [self-hosted, colab]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
