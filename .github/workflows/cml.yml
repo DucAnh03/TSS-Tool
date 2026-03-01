@@ -1,0 +1,51 @@
+name: MLOps — Emotion CI (Colab + HuggingFace + CML)
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  train-and-report:
+    # Chạy trên Google Colab self-hosted runner (label: colab)
+    runs-on: [self-hosted, colab]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cài Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Train — TF-IDF + LR trên dair-ai/emotion
+        env:
+          TRAIN_SIZE: "2000"
+          TEST_SIZE:  "500"
+        run: python train.py
+
+      - name: Setup CML
+        uses: iterative/setup-cml@v2
+
+      - name: Tạo báo cáo và post lên PR
+        env:
+          REPO_TOKEN: ${{ secrets.REPO_TOKEN }}   # GitHub PAT lưu trong Secrets
+        run: |
+          cat > report.md << 'EOF'
+          # 🚀 Báo Cáo Huấn Luyện — Emotion Classification
+          > Chạy tự động trên **Google Colab** · Dataset từ **HuggingFace**
+
+          ## 📊 Metrics
+          EOF
+
+          cat metrics.txt >> report.md
+
+          echo "" >> report.md
+          echo "## 🖼️ Confusion Matrix" >> report.md
+          cml publish confusion_matrix.png --md >> report.md
+
+          cml comment create report.md

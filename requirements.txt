@@ -17,6 +17,9 @@ sounddevice==0.4.7
 soundfile==0.12.1
 websockets==12.0
 
+# ── Emotion / HuggingFace (MLOps demo) ───────────────────────────────────────
+datasets==2.20.0
+
 # ── Vision / CIFAR-10 (MLOps demo) ───────────────────────────────────────────
 torch==2.3.1
 torchvision==0.18.1
