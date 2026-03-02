@@ -31,7 +31,7 @@ jobs:
           cache: pip
 
       - name: Cài Kaggle API + dependencies
-        run: pip install kaggle pyyaml requests
+        run: pip install "kaggle<1.8.0" pyyaml requests
 
       - name: Trigger Kaggle kernel → train PhoBERT
         env:

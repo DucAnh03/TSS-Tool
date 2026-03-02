@@ -16,13 +16,6 @@ HuggingFace Hub (lưu model)
 ↓ CML
 PR comment: metrics + confusion matrix
 
-─────────────────────────────────
-Runtime flow (sau khi có model):
+# ─────────────────────────────────
 
-Laptop mic → "Hey Jarvis"
-↓ WebSocket
-VPS :8000 — faster-whisper → text
-↓ PhoBERT (load từ HF Hub)
-intent / sentiment
-↓
-Trả về laptop: {text, intent, confidence}
+# echo "" >> config/params.yaml
