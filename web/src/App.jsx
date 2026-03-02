@@ -42,7 +42,7 @@ function useJarvisSocket() {
             case 'transcript': return {
               ...d,
               transcripts: [
-                { text: msg.text, time: now() },
+                { text: msg.text, intent: msg.intent, time: now() },
                 ...d.transcripts,
               ].slice(0, 30),
             }
@@ -164,6 +164,19 @@ export default function App() {
               : d.transcripts.map((t, i) => (
                 <div className="transcript-item" key={i}>
                   <div className="transcript-text">{t.text || <em style={{ color: 'var(--muted)' }}>(trống)</em>}</div>
+                  {t.intent && (
+                    <div style={{ fontSize: 11, marginTop: 3, display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <span style={{
+                        padding: '1px 7px', borderRadius: 8,
+                        background: t.intent.label_id === 2 ? '#16a34a33' : t.intent.label_id === 0 ? '#dc262633' : '#ca8a0433',
+                        color:      t.intent.label_id === 2 ? '#4ade80'   : t.intent.label_id === 0 ? '#f87171'   : '#fbbf24',
+                        fontWeight: 600,
+                      }}>
+                        {t.intent.label}
+                      </span>
+                      <span style={{ color: 'var(--muted)' }}>{(t.intent.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                  )}
                   <div className="transcript-time">{t.time}</div>
                 </div>
               ))

@@ -1,4 +1,4 @@
-name: MLOps — Emotion CI (Colab + HuggingFace + CML)
+name: MLOps — Emotion CI ( + HuggingFace + CML)
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
       - name: Train — TF-IDF + LR trên dair-ai/emotion
         env:
           TRAIN_SIZE: "2000"
-          TEST_SIZE:  "500"
+          TEST_SIZE: "500"
         run: python train.py
 
       - name: Setup CML
@@ -32,7 +32,7 @@ jobs:
 
       - name: Tạo báo cáo và post lên PR
         env:
-          REPO_TOKEN: ${{ secrets.REPO_TOKEN }}   # GitHub PAT lưu trong Secrets
+          REPO_TOKEN: ${{ secrets.REPO_TOKEN }} # GitHub PAT lưu trong Secrets
         run: |
           cat > report.md << 'EOF'
           # 🚀 Báo Cáo Huấn Luyện — Emotion Classification

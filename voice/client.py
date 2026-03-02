@@ -127,10 +127,15 @@ async def stream_to_vps():
         async for raw in ws:
             msg = json.loads(raw)
             if msg["type"] == "transcript":
-                text = msg.get("text", "").strip()
-                emit({"type": "transcript", "text": text})
+                text   = msg.get("text", "").strip()
+                intent = msg.get("intent")   # {"label": "tích cực", "label_id": 2, "confidence": 0.93}
+                emit({"type": "transcript", "text": text, "intent": intent})
                 if text:
-                    print(f"\n\033[92m[Jarvis]\033[0m {text}\n")
+                    print(f"\n\033[92m[STT]\033[0m {text}")
+                    if intent:
+                        label = intent.get("label", "?")
+                        conf  = intent.get("confidence", 0)
+                        print(f"\033[95m[Cảm xúc]\033[0m {label}  ({conf*100:.0f}%)\n")
                 stop.set()
             elif msg["type"] == "status":
                 s = msg.get("status", "")
