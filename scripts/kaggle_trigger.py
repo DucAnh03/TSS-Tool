@@ -54,23 +54,31 @@ meta = {
 # ── Push kernel ───────────────────────────────────────────────────────────────
 print(f"Pushing kernel → {KERNEL_ID}")
 api.kernels_push(str(PUSH_DIR))
-print("Kernel pushed, waiting for run to start…")
-time.sleep(15)
+print("Kernel pushed, chờ Kaggle queue run mới…")
+time.sleep(60)   # chờ Kaggle khởi động run mới (tránh đọc nhầm status cũ)
 
 # ── Poll trạng thái ───────────────────────────────────────────────────────────
-MAX_WAIT = 60 * 60   # 1 giờ tối đa
-waited   = 0
-interval = 30
+MAX_WAIT     = 60 * 60   # 1 giờ tối đa
+waited       = 0
+interval     = 30
+new_run_seen = False     # đảm bảo đã thấy "running" trước khi chấp nhận "complete"
 
 while waited < MAX_WAIT:
     status = api.kernel_status(USERNAME, KERNEL_SLUG)
-    print(f"  [{waited//60:02d}m] status = {status.status}")
+    st     = status.status
+    print(f"  [{waited//60:02d}m] status = {st}")
 
-    if status.status == "complete":
-        print("✅ Kernel hoàn thành!")
-        break
-    if status.status in ("error", "cancelAcknowledged", "cancel"):
-        raise RuntimeError(f"Kaggle kernel thất bại: {status.status}")
+    if st in ("running", "queued"):
+        new_run_seen = True
+
+    if st == "complete":
+        if new_run_seen:
+            print("✅ Kernel hoàn thành!")
+            break
+        else:
+            print("  (status cũ — chờ run mới start…)")
+    elif st in ("error", "cancelAcknowledged", "cancel"):
+        raise RuntimeError(f"Kaggle kernel thất bại: {st}")
 
     time.sleep(interval)
     waited += interval
