@@ -8,19 +8,19 @@ model:
   max_length: 128
 
 training:
-  epochs: 5
+  epochs: 2
   batch_size: 32
   learning_rate: 2e-5
   warmup_ratio: 0.1
   weight_decay: 0.01
-  early_stopping_patience: 2
+  early_stopping_patience: 1
 
 dataset:
   name: uitnlp/vietnamese_students_feedback
   text_column: sentence
   label_column: sentiment
-  train_size: 10000
-  test_size: 2000
+  train_size: 800
+  test_size: 200
 
 labels:
   0: "tiêu cực"
