@@ -164,7 +164,7 @@ sft_cfg = SFTConfig(
     gradient_accumulation_steps=GRAD_ACC,
     learning_rate=LR,
     warmup_ratio=WARMUP,
-    max_seq_length=MAX_SEQ_LEN,
+    max_length=MAX_SEQ_LEN,       # trl >= 0.12: max_seq_length → max_length
     logging_steps=10,
     eval_strategy="epoch",
     save_strategy="epoch",
