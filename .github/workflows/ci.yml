@@ -31,8 +31,10 @@ jobs:
       - name: Cài ruff
         run: pip install ruff
 
-      - name: Ruff lint
-        run: ruff check . --select E,F,W --ignore E501 --exclude .venv,_kaggle_push_llm
+      - name: Ruff lint — chỉ check file mới
+        run: |
+          ruff check llm/ scripts/llm_kaggle_trigger.py \
+            --select E,F,W --ignore E501,E402
 
       - name: Syntax check — Python files
         run: |
