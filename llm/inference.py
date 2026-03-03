@@ -20,7 +20,7 @@ HF_TOKEN     = os.getenv("HF_TOKEN", "")
 OLLAMA_URL   = os.getenv("OLLAMA_URL",   "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:4b")
 
-HF_API_URL = "https://router.huggingface.co/v1/chat/completions"
+HF_API_URL = f"https://router.huggingface.co/hf-inference/models/{HF_REPO}/v1/chat/completions"
 
 SYSTEM_PROMPT = (
     "Bạn là Jarvis, trợ lý AI thông minh của chủ nhân. "
@@ -33,7 +33,6 @@ SYSTEM_PROMPT = (
 def _hf_generate(text: str, max_tokens: int) -> str:
     """Gọi HF Serverless Inference API."""
     payload = json.dumps({
-        "model": HF_REPO,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user",   "content": text.strip()},

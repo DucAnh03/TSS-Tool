@@ -197,25 +197,7 @@ perplexity   = math.exp(eval_loss)
 print(f"Eval loss: {eval_loss:.4f}  Perplexity: {perplexity:.2f}")
 
 
-# ── Merge adapter vào base model → push full model lên HF Hub ────────────────
-if HF_TOKEN:
-    try:
-        print(f"\nMerging LoRA adapter into base model…")
-        merged_model = trainer.model.merge_and_unload()
-        # Dequantize hoàn toàn về float16 trước khi push
-        merged_model = merged_model.to(torch.float16)
-        print(f"Pushing merged model → {HF_REPO}")
-        merged_model.push_to_hub(HF_REPO, token=HF_TOKEN, safe_serialization=True)
-        tokenizer.push_to_hub(HF_REPO, token=HF_TOKEN)
-        print("Push done! Model sẵn sàng trên HF Inference API.")
-    except Exception as e:
-        print(f"\n⚠ HF push thất bại: {e}")
-        print("  → Training metrics vẫn được lưu. Kiểm tra HF_TOKEN có quyền Write không.")
-else:
-    print("\n⚠ HF_TOKEN chưa đặt — bỏ qua push to Hub")
-
-
-# ── Sample generations ─────────────────────────────────────────
+# ── Sample generations (trước push để model còn available) ────────────────────
 print("\nGenerating samples…")
 sample_prompts = [
     "Thủ đô của Việt Nam là gì?",
@@ -233,7 +215,6 @@ for prompt in sample_prompts:
     raw = tokenizer.apply_chat_template(
         messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
     )
-    # apply_chat_template có thể trả về tensor hoặc BatchEncoding tuỳ version
     input_ids = raw if isinstance(raw, torch.Tensor) else raw["input_ids"]
     input_ids = input_ids.to(model.device)
     with torch.no_grad():
@@ -288,4 +269,55 @@ for s in samples_text:
 
 Path("metrics.txt").write_text(metrics, encoding="utf-8")
 print("Saved metrics.txt")
+
+
+# ── Merge adapter vào base model → push float16 lên HF Hub ───────────────────
+if HF_TOKEN:
+    try:
+        # Bước 1: Save LoRA adapter riêng
+        adapter_path = "/kaggle/working/lora_adapter"
+        print(f"\nSaving LoRA adapter → {adapter_path}")
+        trainer.model.save_pretrained(adapter_path)
+        tokenizer.save_pretrained(adapter_path)
+
+        # Xóa quantization_config khỏi adapter_config.json trước khi reload
+        # (BnB QLoRA lưu kèm config này → gây lỗi khi merge vào float16 base)
+        import json as _json
+        _cfg_path = f"{adapter_path}/adapter_config.json"
+        _cfg = _json.load(open(_cfg_path))
+        _cfg.pop("quantization_config", None)
+        _json.dump(_cfg, open(_cfg_path, "w"), indent=2)
+
+        # Bước 2: Giải phóng bộ nhớ GPU
+        import gc
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()
+
+        # Bước 3: Reload base model bằng float16 thuần (không BnB)
+        print("Reloading base model in float16 (no quantization)…")
+        from peft import PeftModel
+        base_f16 = AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            trust_remote_code=True,
+        )
+
+        # Bước 4: Load adapter + merge
+        print("Merging LoRA adapter into float16 base model…")
+        peft_f16 = PeftModel.from_pretrained(base_f16, adapter_path)
+        merged_model = peft_f16.merge_and_unload()
+
+        # Bước 5: Push clean float16 model
+        print(f"Pushing merged model → {HF_REPO}")
+        merged_model.push_to_hub(HF_REPO, token=HF_TOKEN, safe_serialization=True)
+        tokenizer.push_to_hub(HF_REPO, token=HF_TOKEN)
+        print("Push done! Model sẵn sàng trên HF Inference API.")
+    except Exception as e:
+        print(f"\n⚠ HF push thất bại: {e}")
+        print("  → Training metrics vẫn được lưu.")
+else:
+    print("\n⚠ HF_TOKEN chưa đặt — bỏ qua push to Hub")
+
 print("\n✅ Pipeline hoàn thành!")
