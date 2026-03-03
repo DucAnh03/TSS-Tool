@@ -43,9 +43,7 @@ cfg = yaml.safe_load(cfg_path.read_text())
 
 BASE_MODEL   = cfg["model"]["base"]
 HF_REPO      = cfg["model"]["hf_repo"]
-HF_TOKEN     = os.environ.get("HF_TOKEN", "")
-if not HF_TOKEN and Path("hf_token.txt").exists():
-    HF_TOKEN = Path("hf_token.txt").read_text().strip()
+HF_TOKEN = "INJECT_HF_TOKEN"  # replaced by llm_kaggle_trigger.py
 
 LORA_R       = cfg["lora"]["r"]
 LORA_ALPHA   = cfg["lora"]["alpha"]
@@ -226,15 +224,18 @@ for prompt in sample_prompts:
         {"role": "system",    "content": "Bạn là Jarvis, trợ lý AI thông minh. Trả lời ngắn gọn và chính xác bằng tiếng Việt."},
         {"role": "user",      "content": prompt},
     ]
-    inputs = tokenizer.apply_chat_template(
+    raw = tokenizer.apply_chat_template(
         messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
-    ).to(model.device)
+    )
+    # apply_chat_template có thể trả về tensor hoặc BatchEncoding tuỳ version
+    input_ids = raw if isinstance(raw, torch.Tensor) else raw["input_ids"]
+    input_ids = input_ids.to(model.device)
     with torch.no_grad():
         out = model.generate(
-            inputs, max_new_tokens=100, temperature=0.7, do_sample=True,
+            input_ids, max_new_tokens=100, temperature=0.7, do_sample=True,
             pad_token_id=tokenizer.eos_token_id,
         )
-    response = tokenizer.decode(out[0][inputs.shape[1]:], skip_special_tokens=True).strip()
+    response = tokenizer.decode(out[0][input_ids.shape[1]:], skip_special_tokens=True).strip()
     samples_text.append(f"Q: {prompt}\nA: {response}")
     print(f"  Q: {prompt}\n  A: {response}\n")
 

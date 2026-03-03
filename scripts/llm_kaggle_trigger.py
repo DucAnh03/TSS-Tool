@@ -64,13 +64,11 @@ train_code = train_code.replace(
     f'cfg = {repr(cfg)}'
 )
 
-# Inject HF_TOKEN nếu có
-if HF_TOKEN:
-    train_code = train_code.replace(
-        'HF_TOKEN = os.environ.get("HF_TOKEN", "")',
-        f'HF_TOKEN = "{HF_TOKEN}"',
-        1,  # chỉ replace lần đầu
-    )
+# Inject HF_TOKEN qua placeholder
+train_code = train_code.replace(
+    '"INJECT_HF_TOKEN"',
+    f'"{HF_TOKEN}"' if HF_TOKEN else '""',
+)
 
 (PUSH_DIR / "train.py").write_text(train_code)
 
