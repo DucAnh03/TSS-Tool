@@ -119,6 +119,7 @@ bnb_cfg = BitsAndBytesConfig(
 model = AutoModelForCausalLM.from_pretrained(
     BASE_MODEL,
     quantization_config=bnb_cfg,
+    torch_dtype=torch.float16,    # P100 không hỗ trợ bfloat16
     device_map="auto",
     trust_remote_code=True,
 )
