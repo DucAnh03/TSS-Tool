@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import time
+import yaml
 from pathlib import Path
 
 USERNAME    = os.environ["KAGGLE_USERNAME"]
@@ -48,9 +49,29 @@ if PUSH_DIR.exists():
     shutil.rmtree(PUSH_DIR)
 PUSH_DIR.mkdir()
 
-shutil.copy("llm/train.py", PUSH_DIR / "train.py")
-(PUSH_DIR / "config").mkdir(exist_ok=True)
-shutil.copy("config/qwen_params.yaml", PUSH_DIR / "config/qwen_params.yaml")
+# ── Inject config + HF_TOKEN trực tiếp vào train.py trước khi push ──────────
+cfg = yaml.safe_load(Path("config/qwen_params.yaml").read_text())
+
+train_code = Path("llm/train.py").read_text()
+
+# Thay block đọc yaml bằng dict inline — không cần file path trên Kaggle
+train_code = train_code.replace(
+    'cfg_path = Path("config/qwen_params.yaml")\n'
+    'if not cfg_path.exists():\n'
+    '    cfg_path = Path("/kaggle/working/config/qwen_params.yaml")\n'
+    'cfg = yaml.safe_load(cfg_path.read_text())',
+    f'cfg = {repr(cfg)}'
+)
+
+# Inject HF_TOKEN nếu có
+if HF_TOKEN:
+    train_code = train_code.replace(
+        'HF_TOKEN = os.environ.get("HF_TOKEN", "")',
+        f'HF_TOKEN = "{HF_TOKEN}"',
+        1,  # chỉ replace lần đầu
+    )
+
+(PUSH_DIR / "train.py").write_text(train_code)
 
 meta = {
     "id":              KERNEL_ID,
@@ -93,7 +114,10 @@ while waited < MAX_WAIT:
         else:
             print("  (status cũ — chờ run mới…)")
     elif st in ("error", "cancelacknowledged", "cancel"):
-        raise RuntimeError(f"Kaggle kernel thất bại: {st}")
+        if new_run_seen:
+            raise RuntimeError(f"Kaggle kernel thất bại: {st}")
+        else:
+            print(f"  (status cũ {st} — chờ run mới…)")
 
     time.sleep(interval)
     waited += interval
