@@ -163,7 +163,7 @@ sft_cfg = SFTConfig(
     per_device_eval_batch_size=BATCH_SIZE,
     gradient_accumulation_steps=GRAD_ACC,
     learning_rate=LR,
-    warmup_ratio=WARMUP,
+    warmup_steps=10,              # thay warmup_ratio (deprecated transformers v5)
     max_length=MAX_SEQ_LEN,       # trl >= 0.12: max_seq_length → max_length
     logging_steps=10,
     eval_strategy="epoch",
@@ -176,7 +176,7 @@ sft_cfg = SFTConfig(
 
 trainer = SFTTrainer(
     model=model,
-    tokenizer=tokenizer,
+    processing_class=tokenizer,   # trl >= 0.12: tokenizer → processing_class
     train_dataset=train_ds,
     eval_dataset=eval_ds,
     args=sft_cfg,
