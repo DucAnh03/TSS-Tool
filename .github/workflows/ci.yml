@@ -1,0 +1,42 @@
+name: CI — Code Quality
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths-ignore:
+      - "config/qwen_params.yaml"
+      - "llm/train.py"
+      - "scripts/llm_kaggle_trigger.py"
+  pull_request:
+    branches: ["main", "master"]
+    paths-ignore:
+      - "config/qwen_params.yaml"
+      - "llm/train.py"
+      - "scripts/llm_kaggle_trigger.py"
+
+jobs:
+  lint:
+    name: Lint & Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Cài ruff
+        run: pip install ruff
+
+      - name: Ruff lint
+        run: ruff check . --select E,F,W --ignore E501 --exclude .venv,_kaggle_push_llm
+
+      - name: Syntax check — Python files
+        run: |
+          python -m py_compile voice/client.py
+          python -m py_compile llm/inference.py
+          python -m py_compile llm/eval.py
+          echo "✅ Syntax OK"
