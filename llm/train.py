@@ -202,8 +202,10 @@ if HF_TOKEN:
     try:
         print(f"\nMerging LoRA adapter into base model…")
         merged_model = trainer.model.merge_and_unload()
+        # Dequantize hoàn toàn về float16 trước khi push
+        merged_model = merged_model.to(torch.float16)
         print(f"Pushing merged model → {HF_REPO}")
-        merged_model.push_to_hub(HF_REPO, token=HF_TOKEN)
+        merged_model.push_to_hub(HF_REPO, token=HF_TOKEN, safe_serialization=True)
         tokenizer.push_to_hub(HF_REPO, token=HF_TOKEN)
         print("Push done! Model sẵn sàng trên HF Inference API.")
     except Exception as e:

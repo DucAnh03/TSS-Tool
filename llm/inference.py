@@ -15,12 +15,12 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-HF_REPO      = os.getenv("LLM_ADAPTER_REPO", "DucAnh03/qwen-vi-jarvis")
+HF_REPO      = os.getenv("LLM_ADAPTER_REPO", "Ducanh1123312/qwen-vi-jarvis")
 HF_TOKEN     = os.getenv("HF_TOKEN", "")
 OLLAMA_URL   = os.getenv("OLLAMA_URL",   "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:4b")
 
-HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_REPO}"
+HF_API_URL = "https://router.huggingface.co/v1/chat/completions"
 
 SYSTEM_PROMPT = (
     "Bạn là Jarvis, trợ lý AI thông minh của chủ nhân. "
@@ -32,7 +32,6 @@ SYSTEM_PROMPT = (
 
 def _hf_generate(text: str, max_tokens: int) -> str:
     """Gọi HF Serverless Inference API."""
-    # Dùng chat completions endpoint (hỗ trợ instruction models)
     payload = json.dumps({
         "model": HF_REPO,
         "messages": [
@@ -44,7 +43,7 @@ def _hf_generate(text: str, max_tokens: int) -> str:
     }).encode()
 
     req = Request(
-        "https://api-inference.huggingface.co/v1/chat/completions",
+        HF_API_URL,
         data=payload,
         headers={
             "Authorization":  f"Bearer {HF_TOKEN}",
@@ -52,9 +51,14 @@ def _hf_generate(text: str, max_tokens: int) -> str:
         },
         method="POST",
     )
-    with urlopen(req, timeout=30) as resp:
-        body = json.loads(resp.read())
-    return body["choices"][0]["message"]["content"].strip()
+    try:
+        with urlopen(req, timeout=30) as resp:
+            body = json.loads(resp.read())
+        return body["choices"][0]["message"]["content"].strip()
+    except HTTPError as e:
+        body = e.read().decode("utf-8", errors="ignore")
+        print(f"[LLM] HF API {e.code} body: {body[:200]}")
+        raise
 
 
 # ── Ollama fallback ────────────────────────────────────────────────────────────
@@ -64,10 +68,11 @@ def _ollama_generate(text: str, max_tokens: int) -> str:
     payload = json.dumps({
         "model":  OLLAMA_MODEL,
         "stream": False,
+        "think":  False,
         "options": {"num_predict": max_tokens, "temperature": 0.7},
         "messages": [
-            {"role": "system", "content": "/no_think " + SYSTEM_PROMPT},
-            {"role": "user",   "content": text.strip()},
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": "/no_think " + text.strip()},
         ],
     }).encode()
     req = Request(
@@ -100,7 +105,7 @@ def generate(text: str, max_tokens: int = 150) -> str:
             return response
         except HTTPError as e:
             if e.code == 503:
-                print(f"[LLM] HF model đang load ({e}) → fallback Ollama")
+                print(f"[LLM] HF model đang load → fallback Ollama")
             else:
                 print(f"[LLM] HF API lỗi {e.code} → fallback Ollama")
         except Exception as e:
