@@ -6,11 +6,13 @@ on:
     paths:
       - "config/qwen_params.yaml"
       - "llm/train.py"
+      - "scripts/llm_kaggle_trigger.py"
   pull_request:
     branches: ["main", "master"]
     paths:
       - "config/qwen_params.yaml"
       - "llm/train.py"
+      - "scripts/llm_kaggle_trigger.py"
 
 permissions:
   pull-requests: write
