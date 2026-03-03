@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 
 USERNAME    = os.environ["KAGGLE_USERNAME"]
+HF_TOKEN    = os.environ.get("HF_TOKEN", "")
 KERNEL_SLUG = "qwen-vi-training"
 KERNEL_ID   = f"{USERNAME}/{KERNEL_SLUG}"
 PUSH_DIR    = Path("_kaggle_push_llm")
@@ -52,6 +53,10 @@ shutil.copy("llm/train.py", PUSH_DIR / "train.py")
 (PUSH_DIR / "config").mkdir(exist_ok=True)
 shutil.copy("config/qwen_params.yaml", PUSH_DIR / "config/qwen_params.yaml")
 
+# Ghi HF_TOKEN vào file riêng trong kernel — không expose qua env
+if HF_TOKEN:
+    (PUSH_DIR / "hf_token.txt").write_text(HF_TOKEN)
+
 meta = {
     "id":              KERNEL_ID,
     "title":           "Qwen VI Training",
@@ -91,9 +96,12 @@ while waited < MAX_WAIT:
             print("✅ Kernel hoàn thành!")
             break
         else:
-            print("  (status cũ — chờ run mới…)")
+            print("  (status cũ complete — chờ run mới…)")
     elif st in ("error", "cancelacknowledged", "cancel"):
-        raise RuntimeError(f"Kaggle kernel thất bại: {st}")
+        if new_run_seen:
+            raise RuntimeError(f"Kaggle kernel thất bại: {st}")
+        else:
+            print(f"  (status cũ {st} — chờ run mới…)")
 
     time.sleep(interval)
     waited += interval
