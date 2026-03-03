@@ -311,7 +311,7 @@ if HF_TOKEN:
 
         # Bước 5: Push clean float16 model
         print(f"Pushing merged model → {HF_REPO}")
-        merged_model.push_to_hub(HF_REPO, token=HF_TOKEN, safe_serialization=True)
+        merged_model.push_to_hub(HF_REPO, token=HF_TOKEN)
         tokenizer.push_to_hub(HF_REPO, token=HF_TOKEN)
         print("Push done! Model sẵn sàng trên HF Inference API.")
     except Exception as e:
