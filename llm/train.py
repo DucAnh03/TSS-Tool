@@ -55,7 +55,7 @@ TARGET_MODS  = cfg["lora"]["target_modules"]
 EPOCHS       = cfg["training"]["epochs"]
 BATCH_SIZE   = cfg["training"]["batch_size"]
 GRAD_ACC     = cfg["training"]["grad_accumulation"]
-LR           = cfg["training"]["learning_rate"]
+LR           = float(cfg["training"]["learning_rate"])
 WARMUP       = cfg["training"]["warmup_ratio"]
 MAX_SEQ_LEN  = cfg["training"]["max_seq_length"]
 

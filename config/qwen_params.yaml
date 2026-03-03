@@ -16,7 +16,7 @@ training:
   epochs: 3
   batch_size: 4
   grad_accumulation: 4        # effective batch = 16
-  learning_rate: 2e-4
+  learning_rate: 0.0002
   warmup_ratio: 0.03
   max_seq_length: 512
 
