@@ -137,6 +137,11 @@ lora_cfg = LoraConfig(
 model = get_peft_model(model, lora_cfg)
 model.print_trainable_parameters()
 
+# Cast bfloat16 → float32 cho LoRA params (P100 không hỗ trợ bf16 training)
+for param in model.parameters():
+    if param.dtype == torch.bfloat16:
+        param.data = param.data.to(torch.float32)
+
 
 # ── Loss tracking callback ────────────────────────────────────────────────────
 class LossCallback(TrainerCallback):
@@ -170,7 +175,8 @@ sft_cfg = SFTConfig(
     eval_strategy="epoch",
     save_strategy="epoch",
     load_best_model_at_end=True,
-    fp16=True,
+    fp16=False,    # P100 BFloat16 conflict với GradScaler — LoRA dùng float32
+    bf16=False,
     report_to="none",
     dataset_text_field="text",
 )
