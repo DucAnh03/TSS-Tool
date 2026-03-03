@@ -209,7 +209,7 @@ else:
     print("\n⚠ HF_TOKEN chưa đặt — bỏ qua push to Hub")
 
 
-# ── Sample generations ────────────────────────────────────────────────────────
+# ── Sample generations ─────────────────────────────────────────
 print("\nGenerating samples…")
 sample_prompts = [
     "Thủ đô của Việt Nam là gì?",
