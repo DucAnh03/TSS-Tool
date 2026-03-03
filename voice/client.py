@@ -13,6 +13,7 @@ import json
 import os
 import queue
 import sys
+import tempfile
 import threading
 from pathlib import Path
 from typing import Set
@@ -24,6 +25,21 @@ from dotenv import load_dotenv
 from openwakeword.model import Model
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+# ── LLM + TTS (optional — graceful fallback if deps missing) ─────────────────
+try:
+    import edge_tts
+    import pygame
+    _TTS_AVAILABLE = True
+except ImportError:
+    _TTS_AVAILABLE = False
+
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from llm.inference import generate as llm_generate
+    _LLM_AVAILABLE = True
+except ImportError:
+    _LLM_AVAILABLE = False
 
 # ── Config ────────────────────────────────────────────────────────────────────
 VPS_IP      = os.getenv("VPS_IP", "")
@@ -129,13 +145,31 @@ async def stream_to_vps():
             if msg["type"] == "transcript":
                 text   = msg.get("text", "").strip()
                 intent = msg.get("intent")   # {"label": "tích cực", "label_id": 2, "confidence": 0.93}
-                emit({"type": "transcript", "text": text, "intent": intent})
                 if text:
                     print(f"\n\033[92m[STT]\033[0m {text}")
                     if intent:
                         label = intent.get("label", "?")
                         conf  = intent.get("confidence", 0)
                         print(f"\033[95m[Cảm xúc]\033[0m {label}  ({conf*100:.0f}%)\n")
+
+                    # ── LLM response ──────────────────────────────────────────
+                    response = None
+                    if _LLM_AVAILABLE:
+                        try:
+                            response = llm_generate(text)
+                            print(f"\033[94m[Jarvis]\033[0m {response}\n")
+                        except Exception as e:
+                            print(f"\033[91m[LLM error]\033[0m {e}")
+
+                    emit({"type": "transcript", "text": text, "intent": intent,
+                          "response": response})
+
+                    # ── TTS speak ─────────────────────────────────────────────
+                    if response and _TTS_AVAILABLE:
+                        asyncio.create_task(tts_speak(response))
+                else:
+                    emit({"type": "transcript", "text": text, "intent": intent,
+                          "response": None})
                 stop.set()
             elif msg["type"] == "status":
                 s = msg.get("status", "")
@@ -171,6 +205,26 @@ async def stream_to_vps():
         emit({"type": "vps_status", "connected": False})
         emit({"type": "status",     "status":    "idle"})
         pa.terminate()
+
+
+# ── TTS speak (edge-tts + pygame) ────────────────────────────────────────────
+
+async def tts_speak(text: str, voice: str = "vi-VN-HoaiMyNeural"):
+    """Đọc text bằng edge-tts, phát qua pygame."""
+    if not _TTS_AVAILABLE:
+        return
+    try:
+        communicate = edge_tts.Communicate(text, voice=voice)
+        tmp = tempfile.mktemp(suffix=".mp3")
+        await communicate.save(tmp)
+        pygame.mixer.init()
+        pygame.mixer.music.load(tmp)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            await asyncio.sleep(0.1)
+        os.remove(tmp)
+    except Exception as e:
+        print(f"\033[91m[TTS error]\033[0m {e}")
 
 
 # ── Wake word loop (runs fully synchronous in main thread) ───────────────────

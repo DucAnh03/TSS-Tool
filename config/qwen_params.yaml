@@ -1,0 +1,26 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Thay đổi file này → git push → GitHub Actions trigger Kaggle training
+# ──────────────────────────────────────────────────────────────────────────────
+
+model:
+  base:         Qwen/Qwen2.5-1.5B-Instruct
+  hf_repo:      DucAnh03/qwen-vi-jarvis    # push merged model lên đây
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: ["q_proj", "v_proj", "k_proj", "o_proj"]
+
+training:
+  epochs: 3
+  batch_size: 4
+  grad_accumulation: 4        # effective batch = 16
+  learning_rate: 2e-4
+  warmup_ratio: 0.03
+  max_seq_length: 512
+
+dataset:
+  name:       bkai-foundation-models/vi-alpaca
+  train_size: 500             # nhỏ để CI/CD chạy nhanh ~10-15 phút
+  test_size:  100

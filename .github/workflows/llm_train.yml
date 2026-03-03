@@ -1,16 +1,16 @@
-name: PhoBERT Training Pipeline
+name: Qwen2.5 QLoRA Fine-tuning Pipeline
 
 on:
   push:
     branches: ["main", "master"]
     paths:
-      - "config/params.yaml"
-      - "phobert/train.py"
+      - "config/qwen_params.yaml"
+      - "llm/train.py"
   pull_request:
     branches: ["main", "master"]
     paths:
-      - "config/params.yaml"
-      - "phobert/train.py"
+      - "config/qwen_params.yaml"
+      - "llm/train.py"
 
 permissions:
   pull-requests: write
@@ -30,43 +30,43 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Cài Kaggle API + dependencies
+      - name: Cài dependencies
         run: pip install "kaggle<1.8.0" pyyaml requests
 
-      - name: Trigger Kaggle kernel → train PhoBERT
+      - name: Trigger Kaggle → QLoRA fine-tune Qwen2.5-1.5B
         env:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY:      ${{ secrets.KAGGLE_KEY }}
           HF_TOKEN:        ${{ secrets.HF_TOKEN }}
-          HF_MODEL_REPO:   ${{ secrets.HF_MODEL_REPO }}
+          HF_ADAPTER_REPO: ${{ secrets.HF_ADAPTER_REPO }}
         run: |
           mkdir -p ~/.kaggle
           printf '{"username":"%s","key":"%s"}' "$KAGGLE_USERNAME" "$KAGGLE_KEY" > ~/.kaggle/kaggle.json
           chmod 600 ~/.kaggle/kaggle.json
-          python scripts/kaggle_trigger.py
+          python scripts/llm_kaggle_trigger.py
 
       - name: Setup CML
         uses: iterative/setup-cml@v2
 
-      - name: Tạo CML report → post vào PR
+      - name: CML report → comment vào PR
         env:
           REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
           cat > report.md << 'REPORT'
-          # 🤖 PhoBERT Training Report
+          # 🤖 Qwen2.5-1.5B QLoRA Fine-tuning Report
 
-          > **Trigger:** `config/params.yaml` thay đổi
-          > **Runner:** Kaggle T4 GPU (free)
-          > **Model:** vinai/phobert-base → HuggingFace Hub
+          > **Trigger:** `config/qwen_params.yaml` thay đổi
+          > **Runner:** Kaggle T4 GPU (free tier)
+          > **Dataset:** `bkai-foundation-models/vi-alpaca` (500 train / 100 eval)
 
-          ## 📊 Metrics
+          ## 📊 Training Metrics
           REPORT
 
           cat metrics.txt >> report.md
 
           echo "" >> report.md
-          echo "## 🖼️ Confusion Matrix" >> report.md
-          cml publish confusion_matrix.png --md >> report.md
+          echo "## 📈 Loss Curve" >> report.md
+          cml publish loss_curve.png --md >> report.md
 
           echo "" >> report.md
           echo "---" >> report.md
