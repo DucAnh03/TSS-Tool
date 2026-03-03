@@ -199,12 +199,16 @@ print(f"Eval loss: {eval_loss:.4f}  Perplexity: {perplexity:.2f}")
 
 # ── Merge adapter vào base model → push full model lên HF Hub ────────────────
 if HF_TOKEN:
-    print(f"\nMerging LoRA adapter into base model…")
-    merged_model = trainer.model.merge_and_unload()
-    print(f"Pushing merged model → {HF_REPO}")
-    merged_model.push_to_hub(HF_REPO, token=HF_TOKEN)
-    tokenizer.push_to_hub(HF_REPO, token=HF_TOKEN)
-    print("Push done! Model sẵn sàng trên HF Inference API.")
+    try:
+        print(f"\nMerging LoRA adapter into base model…")
+        merged_model = trainer.model.merge_and_unload()
+        print(f"Pushing merged model → {HF_REPO}")
+        merged_model.push_to_hub(HF_REPO, token=HF_TOKEN)
+        tokenizer.push_to_hub(HF_REPO, token=HF_TOKEN)
+        print("Push done! Model sẵn sàng trên HF Inference API.")
+    except Exception as e:
+        print(f"\n⚠ HF push thất bại: {e}")
+        print("  → Training metrics vẫn được lưu. Kiểm tra HF_TOKEN có quyền Write không.")
 else:
     print("\n⚠ HF_TOKEN chưa đặt — bỏ qua push to Hub")
 
