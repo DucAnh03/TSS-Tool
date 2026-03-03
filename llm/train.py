@@ -42,9 +42,10 @@ if not cfg_path.exists():
 cfg = yaml.safe_load(cfg_path.read_text())
 
 BASE_MODEL   = cfg["model"]["base"]
-ADAPTER_REPO = cfg["model"]["adapter_repo"]
+HF_REPO      = cfg["model"]["hf_repo"]
 HF_TOKEN     = os.environ.get("HF_TOKEN", "")
-HF_REPO      = cfg["model"].get("hf_repo", ADAPTER_REPO)
+if not HF_TOKEN and Path("hf_token.txt").exists():
+    HF_TOKEN = Path("hf_token.txt").read_text().strip()
 
 LORA_R       = cfg["lora"]["r"]
 LORA_ALPHA   = cfg["lora"]["alpha"]
