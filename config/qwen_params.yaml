@@ -4,7 +4,7 @@
 
 model:
   base:         Qwen/Qwen2.5-1.5B-Instruct
-  hf_repo:      DucAnh03/qwen-vi-jarvis    # push merged model lên đây
+  hf_repo:      Ducanh1123312/qwen-vi-jarvis    # push merged model lên đây
 
 lora:
   r: 16
