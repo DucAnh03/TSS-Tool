@@ -13,6 +13,7 @@ import yaml
 from pathlib import Path
 
 USERNAME    = os.environ["KAGGLE_USERNAME"]
+HF_TOKEN    = os.environ.get("HF_TOKEN", "")
 KERNEL_SLUG = "qwen-vi-training"
 KERNEL_ID   = f"{USERNAME}/{KERNEL_SLUG}"
 PUSH_DIR    = Path("_kaggle_push_llm")
