@@ -35,3 +35,17 @@ Secrets cần thêm vào GitHub repo:
 # ─────────────────────────────────
 
 # echo "" >> config/params.yaml
+
+=================================
+
+# 1. Download model mới từ HF (overwrite)
+
+huggingface-cli download Ducanh1123312/qwen-vi-jarvis --local-dir D:\local_bot\qwen-vi-jarvis-clean --force-download
+
+# 2. Convert lại GGUF (overwrite)
+
+python D:\llama.cpp\convert_hf_to_gguf.py D:\local_bot\qwen-vi-jarvis-clean --outfile D:\local_bot\qwen-vi-jarvis.gguf --outtype q8_0
+
+# 3. Update Ollama (overwrite model cũ)
+
+ollama create jarvis-vi -f D:\local_bot\Modelfile

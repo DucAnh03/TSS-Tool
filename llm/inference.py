@@ -71,7 +71,7 @@ def _ollama_generate(text: str, max_tokens: int) -> str:
         "options": {"num_predict": max_tokens, "temperature": 0.7},
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user",   "content": "/no_think " + text.strip()},
+            {"role": "user",   "content": text.strip()},
         ],
     }).encode()
     req = Request(
@@ -110,7 +110,7 @@ def generate(text: str, max_tokens: int = 150) -> str:
         except Exception as e:
             print(f"[LLM] HF API lỗi: {e} → fallback Ollama")
     else:
-        print("[LLM] HF_TOKEN chưa đặt → dùng Ollama")
+        print("[LLM] HF_TOKEN chưa đặt → dùng Model local Ollama")
 
     try:
         response = _ollama_generate(text, max_tokens)

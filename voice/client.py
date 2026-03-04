@@ -29,7 +29,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 # ── LLM + TTS (optional — graceful fallback if deps missing) ─────────────────
 try:
     import edge_tts
-    import pygame
+    from playsound import playsound
     _TTS_AVAILABLE = True
 except ImportError:
     _TTS_AVAILABLE = False
@@ -153,6 +153,7 @@ async def stream_to_vps():
                         print(f"\033[95m[Cảm xúc]\033[0m {label}  ({conf*100:.0f}%)\n")
 
                     # ── LLM response ──────────────────────────────────────────
+                    emit({"type": "status", "status": "processing"})
                     response = None
                     if _LLM_AVAILABLE:
                         try:
@@ -166,7 +167,7 @@ async def stream_to_vps():
 
                     # ── TTS speak ─────────────────────────────────────────────
                     if response and _TTS_AVAILABLE:
-                        asyncio.create_task(tts_speak(response))
+                        await tts_speak(response[:300])
                 else:
                     emit({"type": "transcript", "text": text, "intent": intent,
                           "response": None})
@@ -210,19 +211,19 @@ async def stream_to_vps():
 # ── TTS speak (edge-tts + pygame) ────────────────────────────────────────────
 
 async def tts_speak(text: str, voice: str = "vi-VN-HoaiMyNeural"):
-    """Đọc text bằng edge-tts, phát qua pygame."""
+    """Đọc text bằng edge-tts, phát qua playsound."""
     if not _TTS_AVAILABLE:
+        print("[TTS] Not available")
         return
+    print(f"[TTS] Generating for: {text[:50]}")
     try:
         communicate = edge_tts.Communicate(text, voice=voice)
         tmp = tempfile.mktemp(suffix=".mp3")
         await communicate.save(tmp)
-        pygame.mixer.init()
-        pygame.mixer.music.load(tmp)
-        pygame.mixer.music.play()
-        while pygame.mixer.music.get_busy():
-            await asyncio.sleep(0.1)
+        print(f"[TTS] Playing {tmp}")
+        await asyncio.to_thread(playsound, tmp)
         os.remove(tmp)
+        print("[TTS] Done")
     except Exception as e:
         print(f"\033[91m[TTS error]\033[0m {e}")
 

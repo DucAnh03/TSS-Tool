@@ -17,9 +17,11 @@ function useJarvisSocket() {
     status:       'idle',
     rms:          0,
     score:        0,
+    llmActive:    0,
     transcripts:  [],
     logs:         [],
   })
+  const llmTimer = useRef(null)
 
   useEffect(() => {
     let ws, timer
@@ -39,13 +41,20 @@ function useJarvisSocket() {
             case 'score':      return { ...d, score: msg.value }
             case 'status':     return { ...d, status: msg.status }
             case 'vps_status': return { ...d, vpsConnected: msg.connected }
-            case 'transcript': return {
-              ...d,
-              transcripts: [
-                { text: msg.text, intent: msg.intent, response: msg.response, time: now() },
-                ...d.transcripts,
-              ].slice(0, 30),
-            }
+            case 'transcript':
+              if (msg.response) {
+                if (llmTimer.current) clearTimeout(llmTimer.current)
+                llmTimer.current = setTimeout(() =>
+                  setData(d => ({ ...d, llmActive: 0 })), 3000)
+              }
+              return {
+                ...d,
+                llmActive: msg.response ? 1 : d.llmActive,
+                transcripts: [
+                  { text: msg.text, intent: msg.intent, response: msg.response, time: now() },
+                  ...d.transcripts,
+                ].slice(0, 30),
+              }
             case 'log': return {
               ...d,
               logs: [
@@ -103,6 +112,21 @@ export default function App() {
   const d          = useJarvisSocket()
   const logRef     = useRef(null)
   const txRef      = useRef(null)
+  const prevTxLen = useRef(0)
+
+  // Auto-speak khi có transcript mới
+  useEffect(() => {
+    if (d.transcripts.length > prevTxLen.current) {
+      const newest = d.transcripts[0]
+      if (newest?.response) {
+        window.speechSynthesis.cancel()
+        const u = new SpeechSynthesisUtterance(newest.response)
+        u.lang = 'vi-VN'; u.rate = 1.1
+        window.speechSynthesis.speak(u)
+      }
+    }
+    prevTxLen.current = d.transcripts.length
+  }, [d.transcripts])
 
   // auto-scroll logs
   useEffect(() => {
@@ -117,6 +141,10 @@ export default function App() {
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <ConnBadge label="Python client" on={d.wsConnected} />
           <ConnBadge label="VPS Contabo"   on={d.vpsConnected} />
+          <button
+            onClick={() => window.speechSynthesis.cancel()}
+            style={{ fontSize: 11, padding: '2px 10px', borderRadius: 6, border: '1px solid #f87171', background: 'transparent', color: '#f87171', cursor: 'pointer' }}
+          >🔇 Dừng đọc</button>
         </div>
       </div>
 
@@ -133,6 +161,9 @@ export default function App() {
         <div className="card">
           <div className="card-title">Wake Word Score — hey_jarvis</div>
           <Meter label="Confidence" value={d.score} cls="score" />
+          <div style={{ marginTop: 12 }}>
+            <Meter label="LLM Response" value={d.llmActive} cls={d.llmActive ? 'rms' : 'score'} />
+          </div>
           <div style={{ fontSize: 11, color: 'var(--muted)' }}>
             Ngưỡng kích hoạt: 0.50 &nbsp;|&nbsp;
             {d.score > 0.3
@@ -180,7 +211,19 @@ export default function App() {
                   )}
                   {t.response && (
                     <div style={{ marginTop: 6 }}>
-                      <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 2 }}>Jarvis:</div>
+                      <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        Jarvis:
+                        <button
+                          onClick={() => {
+                            window.speechSynthesis.cancel()
+                            const u = new SpeechSynthesisUtterance(t.response)
+                            u.lang = 'vi-VN'
+                            u.rate = 1.1
+                            window.speechSynthesis.speak(u)
+                          }}
+                          style={{ fontSize: 10, padding: '1px 8px', borderRadius: 6, border: '1px solid #4ade80', background: 'transparent', color: '#4ade80', cursor: 'pointer' }}
+                        >▶ Đọc</button>
+                      </div>
                       <div style={{ color: '#4ade80', fontSize: 13, lineHeight: 1.5 }}>{t.response}</div>
                     </div>
                   )}
