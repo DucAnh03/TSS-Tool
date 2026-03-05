@@ -22,6 +22,6 @@ training:
 
 dataset:
   name:       bkai-foundation-models/vi-alpaca
-  train_size: 500             # nhỏ để CI/CD chạy nhanh ~10-15 phút
+  train_size: 506             # nhỏ để CI/CD chạy nhanh ~10-15 phút
   test_size:  100
   # trigger: v4

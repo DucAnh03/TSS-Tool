@@ -87,7 +87,7 @@ def format_example(row, tokenizer):
     return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
 
 
-print("\nLoading dataset…")
+print("\nLoading dataset…") 
 raw = load_dataset(DS_NAME, split="train")
 raw = raw.shuffle(seed=42)
 train_ds = raw.select(range(TRAIN_SIZE))
@@ -245,7 +245,7 @@ fig.savefig("loss_curve.png", dpi=120)
 print("Saved loss_curve.png")
 
 
-# ── metrics.txt ───────────────────────────────────────────────────────────────
+# ── metrics.txt ───────────────────────────────────────────────────────────────999
 metrics = textwrap.dedent(f"""
     ## Qwen2.5-1.5B QLoRA Training Metrics
 

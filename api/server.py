@@ -45,7 +45,7 @@ PORT        = int(os.getenv("VPS_PORT", "8000"))
 # VAD tuning — đọc từ .env để dễ chỉnh không cần sửa code
 CHUNK_SAMPLES  = 480
 RMS_THRESHOLD  = int(os.getenv("VAD_RMS_THRESHOLD",  "300"))   # thấp hơn = nhạy hơn
-SILENCE_SEC    = float(os.getenv("VAD_SILENCE_SEC",  "1.5"))   # chờ lâu hơn trước khi cắt
+SILENCE_SEC    = float(os.getenv("VAD_SILENCE_SEC",  "1"))   # chờ lâu hơn trước khi cắt
 MIN_SPEECH_SEC = float(os.getenv("VAD_MIN_SPEECH_SEC","0.3"))
 
 # ── App ───────────────────────────────────────────────────────────────────────
